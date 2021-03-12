@@ -1,0 +1,75 @@
+defaultEntryPoints = ["http", "https"] 
+InsecureSkipVerify = true
+
+[entryPoints]
+   [entryPoints.http]
+   address = ":80"
+   compress = true
+   [entryPoints.https]
+   address = ":443"
+   compress = true
+   [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "/etc/traefik/certs/cert.crt"
+      keyFile = "/etc/traefik/certs/cert.key"
+
+[api]
+  debug = true
+  [api.statistics]
+  recentErrors = 20
+
+[rest]
+logLevel = "INFO"
+
+[accessLog]
+filePath = "/Data/access.log" 
+format = "common"
+
+[ping]
+  entryPoint = "traefik"
+
+[acme]
+email = "l33t@gmail.com"
+storage = "/etc/traefik/acme.json"
+entryPoint = "https"
+OnHostRule = true
+
+[acme.dnsChallenge]
+  provider = "cloudflare"
+  resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+  delaybeforecheck = 0
+
+[[acme.domains]]
+   main = "*.l33t.xyz"
+   sans = ["l33t.xyz"]
+
+#FILE BACKEND
+[file]
+
+[backends]   
+  [backends.backend-traefik] 
+    [backends.backend-traefik.servers]                                                                                                                                                                         
+      [backends.backend-traefik.servers.server-traefik-ext] 
+        url = "http://10.0.1.253:8080"
+        weight = 0
+
+  [backends.backend-web01]
+      [backends.backend-web01.servers]
+        [backends.backend-web01.servers.server-web01-ext]
+          url = "https://10.0.1.10"
+          weight = 0
+
+[frontends]
+  [frontends.frontend-traefik] 
+    backend = "backend-traefik" 
+    passHostHeader = true
+    [frontends.frontend-traefik.routes]                                                                                                                                                                        
+          [frontends.frontend-traefik.routes.route-traefik-ext] 
+        rule = "Host:l33t1.l33t.xyz"
+
+  [frontends.frontend-web01]
+    backend = "backend-web01"
+    passHostHeader = true
+    [frontends.frontend-web01.routes]
+            [frontends.frontend-web01.routes.route-web01-ext]
+          rule = "Host:web01.l33t.xyz"
